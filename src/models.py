@@ -25,6 +25,13 @@ class User(db.Model):
     post: Mapped[list["Post"]] = relationship("Post", back_populates="user")
     comments: Mapped[list["Comment"]] = relationship(
         "Comment", back_populates="author")
+    
+    followers = relationship(
+        "User",
+        secondary=follower_table,
+        
+        
+    )
 
     def serialize(self):
         return {
