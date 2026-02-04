@@ -6,10 +6,10 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 db = SQLAlchemy()
 
 follower_table = Table(
-    "Followers",
-    db.metadata,
-    Column("user_from_id", Integer, ForeignKey("user.id"), primary_key=True),
-    Column("user_to_id", Integer, ForeignKey("user.id"), primary_key=True)
+    "followers",
+    db.Model.metadata,
+    Column("follower_id", Integer, ForeignKey("user.id"), primary_key=True),
+    Column("followed_id", Integer, ForeignKey("user.id"), primary_key=True)
 )
 
 
@@ -25,23 +25,30 @@ class User(db.Model):
     post: Mapped[list["Post"]] = relationship("Post", back_populates="user")
     comments: Mapped[list["Comment"]] = relationship(
         "Comment", back_populates="author")
-    
-    followers = relationship(
+
+    following: Mapped[list["User"]] = relationship(
         "User",
         secondary=follower_table,
-        
-        
-    )
+        primaryjoin=(follower_table.c.follower_id == id),
+        secondaryjoin=(follower_table.c.followed_id == id),
+        back_populates="followers")
+    followers: Mapped[list["User"]] = relationship(
+        "User",
+        secondary=follower_table,
+        primaryjoin=(follower_table.c.followed_id == id),
+        secondaryjoin=(follower_table.c.follower_id == id),
+        back_populates="following")
 
-    def serialize(self):
-        return {
-            "id": self.id,
-            "email": self.email,
-            "username": self.username,
-            "firstname": self.firstname,
-            "lastname": self.lastname
-            # do not serialize the password, its a security breach
-        }
+
+def serialize(self):
+    return {
+        "id": self.id,
+        "email": self.email,
+        "username": self.username,
+        "firstname": self.firstname,
+        "lastname": self.lastname
+        # do not serialize the password, its a security breach
+    }
 
 
 class Post(db.Model):
